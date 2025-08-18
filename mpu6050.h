@@ -1,59 +1,37 @@
 #ifndef MPU6050_H
-
 #define MPU6050_H
 
-#include "main.h"
+#include "stm32f1xx_hal.h"
+#include <stdbool.h>
+#include <math.h>
 
-#define MPU6050_ADDR 		  0x68<<1
-#define PWM_MGMT_1_REG 		0x6B
-#define SMPLRT_DIV_REG 		0x19
-#define GYRO_CNFG_REG 		0x1B
-#define ACC_CNFG_REG 		  0x1C
+// I2C adresi (7-bit adres sol shift ile HAL uyumlu yapılır)
+#define MPU6050_ADDR       (0x68 << 1)
 
-typedef enum{
-  ACC_X,
-  ACC_Y,
-  ACC_Z,
-  GYRO_X,
-  GYRO_Y,
-  GYRO_Z,
-  TEMP,
-}MPU6050GetDataType;
+// Register adresleri
+#define MPU6050_REG_PWR_MGMT_1   0x6B
+#define MPU6050_REG_SMPLRT_DIV   0x19
+#define MPU6050_REG_GYRO_CONFIG  0x1B
+#define MPU6050_REG_ACCEL_CONFIG 0x1C
+#define MPU6050_REG_ACCEL_XOUT_H 0x3B
+#define MPU6050_REG_TEMP_OUT_H   0x41
+#define MPU6050_REG_GYRO_XOUT_H  0x43
 
-typedef struct{
-  uint8_t data_1 = 0x00;
-  uint8_t data_2 = 0x08;
-  uint8_t data_3 = 0x10;
-}MPU6050_Init_Variables;
+typedef struct {
+    int16_t acc_raw[3];
+    int16_t gyro_raw[3];
+    float gyro_cal[3];
+    float temperature;
+    float angle_pitch, angle_roll;
+    float angle_pitch_acc, angle_roll_acc;
+    float angle_pitch_gyro, angle_roll_gyro;
+} MPU6050_t;
 
-typedef struct{
-  uint8_t cuffer[6];
-  float prevtime2, time2, elapsedtime2;
-  int16_t gyro_raw[3];
-  uint8_t buffer[2],tuffer[6];
-  float gyro_cal[3];
-}MPU6050_Calibration_Variables;
-
-typedef struct{
-
-  int16_t acc_total_vector, acc_raw[3];
-  float angle_pitch_gyro;
-  float angle_roll_gyro;
-  float angle_pitch_acc;
-  float angle_roll_acc;
-  float angle_pitch;
-  float angle_roll;
-  int16_t raw_temp;
-  float temp;
-  float prevtime,prevtime1,time1, elapsedtime1;
-}MPU6050_GetDataVariables;
-
-MPU6050_InitStatus MPU6050_Init(I2C_HandleTypeDef *hi2cx);
-MPU6050_Calibration_Variables MPU6050_Calibration()
-
-
-
-
-
+HAL_StatusTypeDef MPU6050_Init(I2C_HandleTypeDef *hi2c);
+void MPU6050_CalibrateGyro(I2C_HandleTypeDef *hi2c, MPU6050_t *mpu);
+void MPU6050_ReadAccel(I2C_HandleTypeDef *hi2c, MPU6050_t *mpu);
+void MPU6050_ReadGyro(I2C_HandleTypeDef *hi2c, MPU6050_t *mpu);
+void MPU6050_ReadTemp(I2C_HandleTypeDef *hi2c, MPU6050_t *mpu);
+void MPU6050_ComputeAngles(MPU6050_t *mpu);
 
 #endif // MPU6050_H
