@@ -4,7 +4,7 @@ HAL_StatusTypeDef MPU6050_Init(I2C_HandleTypeDef *hi2c)
 {
     uint8_t data;
 
-    // Uyandırma
+    // Wake Up
     data = 0x00;
     if (HAL_I2C_Mem_Write(hi2c, MPU6050_ADDR, MPU6050_REG_PWR_MGMT_1, 1, &data, 1, HAL_MAX_DELAY) != HAL_OK)
         return HAL_ERROR;
@@ -86,7 +86,7 @@ void MPU6050_ComputeAngles(MPU6050_t *mpu)
     mpu->angle_pitch_acc = asin((float)mpu->acc_raw[1] / acc_total_vector) * 57.296f;
     mpu->angle_roll_acc  = asin((float)mpu->acc_raw[0] / acc_total_vector) * -57.296f;
 
-    // Basit complementary filter (gyro+acc)
+    // Simple complementary filter (gyro+acc)
     mpu->angle_pitch = mpu->angle_pitch_gyro * 0.9996f + mpu->angle_pitch_acc * 0.0004f;
     mpu->angle_roll  = mpu->angle_roll_gyro * 0.9996f + mpu->angle_roll_acc * 0.0004f;
 }
