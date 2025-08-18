@@ -1,42 +1,53 @@
-# MPU6050-IMU-Library-for-STM32
-A library and sample project file to use the MPU6050 IMU sensor on STM32 development boards.
-This library allows you to quickly and structurally integrate the MPU6050 sensor into your project by keeping your main.c file clean.
-## **Features**
-#### - Clean Code Architecture: Separated into mpu6050.c and mpu6050.h for low dependency and high readability.
+# MPU6050 IMU Library for STM32 MCUs
 
-#### - STM32 HAL Compatible: Works seamlessly with projects created with STM32CubeIDE.
+This repository provides an example project using the **MPU6050 accelerometer + gyroscope sensor** with the **STM32F103C8T6 (Blue Pill)** board.  
+The main goal is to create a **reusable MPU6050 library** and demonstrate its usage.
 
-#### - Struct-based: All sensor data and settings are managed through a single MPU6050_t struct.
+## 🚀 Features
+- MPU6050 driver (`mpu6050.c/.h`) for easy integration via I2C
+- Read raw accelerometer, gyroscope, and temperature data
+- Gyroscope calibration
+- Pitch and roll angle calculation (complementary filter)
+- Example of displaying sensor data on a 16x2 LCD
 
-#### - Unit Conversion: Automatically converts raw sensor data to physical units:
+## 📂 Project Structure
+/Core/Inc/
+main.h
+mpu6050.h -> MPU6050 function prototypes
+/Core/Src/
+main.c -> Example usage
+mpu6050.c -> MPU6050 driver implementation
 
-#### + Accelerometer: g (gravity)
 
-#### + Gyroscope: °/s (degrees/second)
+## 🔧 Hardware Requirements
+- STM32F103C8T6 (Blue Pill)
+- MPU6050 sensor module
+- 16x2 LCD (I2C or parallel)
+- Jumper wires
 
-#### + Temperature: °C (Celsius)
+## 📌 Connections
+| MPU6050 | STM32F103C8T6 |
+|---------|---------------|
+| VCC     | 3.3V          |
+| GND     | GND           |
+| SCL     | PB6 (I2C1_SCL)|
+| SDA     | PB7 (I2C1_SDA)|
 
-#### - Gyroscope Calibration: Calculates gyroscope offsets at startup for more precise measurements.
+> ⚠️ The MPU6050 is **not 5V tolerant**, always power it with **3.3V**.
 
-#### - Easy to Use: Start, calibrate, and read sensor data with just a few function calls.
+## 🛠️ How to Use
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/<umutzaif>/<MPU6050-IMU-Library-for-STM32>.git
+2. Open the project in STM32CubeIDE.
 
-## **Hardware Requirements**
-#### Any STM32 series microcontroller (Examples are for the F1 series).
+3. Make sure MX_I2C1_Init() is configured for the correct pins.
 
-#### MPU6050 sensor module.
+3. Use the provided example in main.c.
 
-#### I2C connection (SCL, SDA).
+## 🗒️ Note
+In this project, sensor data is displayed on a 16x2 LCD screen. I used the LCD.h library for this. For more information about this library, visit [github.com.](https://github.com/BahadirAydinoglu/STM32F1-LCD-Tutorial)
 
-## **Integration and Usage**
-Adding this driver to your own project is very easy:
+## 📝 License
 
-### **Copy the Files:**
-
-Copy the mpu6050.c file to your project's Core/Src folder.
-
-Copy the mpu6050.h file to your project's Core/Inc folder.
-
-### **Add to IDE:**
-
-In STM32CubeIDE, right-click on the project tree and "Refresh" (F5). Make sure the files are added to your project.
-**See main.c file for usage example**
+This project is licensed under the MIT License. See the LICENSE file for details.
