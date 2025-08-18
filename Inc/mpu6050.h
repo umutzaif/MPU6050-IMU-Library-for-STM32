@@ -5,10 +5,10 @@
 #include <stdbool.h>
 #include <math.h>
 
-// I2C adresi (7-bit adres sol shift ile HAL uyumlu yapılır)
+// I2C address (7-bit address made HAL compatible with left shift)
 #define MPU6050_ADDR       (0x68 << 1)
 
-// Register adresleri
+// Register addresses
 #define MPU6050_REG_PWR_MGMT_1   0x6B
 #define MPU6050_REG_SMPLRT_DIV   0x19
 #define MPU6050_REG_GYRO_CONFIG  0x1B
