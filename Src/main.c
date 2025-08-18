@@ -21,6 +21,8 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "mpu6050.h"
+#include "LCD.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -36,11 +38,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MPU6050_ADDR 0x68<<1
-#define PWM_MGMT_1_REG 0x6B
-#define SMPLRT_DIV_REG 0x19
-#define GYRO_CNFG_REG 0x1B
-#define ACC_CNFG_REG 0x1C
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -52,24 +49,6 @@
 I2C_HandleTypeDef hi2c1;
 
 /* USER CODE BEGIN PV */
-uint8_t data;
-uint8_t buffer[2],tuffer[6],cuffer[6];
-int16_t gyro_raw[3], acc_raw[3];
-float gyro_cal[3];
-int16_t acc_total_vector;
-float angle_pitch_gyro;
-float angle_roll_gyro;
-float angle_pitch_acc;
-float angle_roll_acc;
-float angle_pitch;
-float angle_roll;
-int16_t raw_temp;
-float temp;
-int i;
-float prevtime,prevtime1,time1, elapsedtime1,prevtime2,time2,elapsedtime2;
-char ax[20],ay[20],az[20];
-
-HAL_StatusTypeDef set_gyro;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,14 +56,11 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_I2C1_Init(void);
 /* USER CODE BEGIN PFP */
-#include "LCD.h"
-#include "stdio.h"
-#include "string.h"
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+MPU6050_t mpu;
 /* USER CODE END 0 */
 
 /**
@@ -120,35 +96,14 @@ int main(void)
   /* USER CODE BEGIN 2 */
   lcd_init(_LCD_4BIT, _LCD_FONT_5x8, _LCD_2LINE);
   lcd_clear();
-  data = 0x00;
-    HAL_I2C_Mem_Write(&hi2c1, MPU6050_ADDR, PWM_MGMT_1_REG , 1, &data, 1, HAL_MAX_DELAY);
-    data = 0x08;
-    HAL_I2C_Mem_Write(&hi2c1, MPU6050_ADDR, GYRO_CNFG_REG , 1, &data, 1, HAL_MAX_DELAY);
-    data = 0x10;
-    HAL_I2C_Mem_Write(&hi2c1, MPU6050_ADDR, ACC_CNFG_REG , 1, &data, 1, HAL_MAX_DELAY);
-    for(i=0;i<2000;i++){
-  	  prevtime2=time2;
-  	  time2= HAL_GetTick();
-  	  elapsedtime2=(time2-prevtime2)*1000;
-  	  cuffer[0]=0x43;
-  	  HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, cuffer, 1, HAL_MAX_DELAY);
-  	  HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, cuffer, 6, HAL_MAX_DELAY);
-
-  	  gyro_raw[0]=(cuffer[0]<<8|cuffer[1]);
-  	  gyro_raw[1]=(cuffer[2]<<8|cuffer[3]);
-  	  gyro_raw[2]=(cuffer[4]<<8|cuffer[5]);
-
-  	  gyro_cal[0] += gyro_raw[0];
-  	  gyro_cal[1] += gyro_raw[1];
-  	  gyro_cal[2] += gyro_raw[2];
-
-  	  HAL_Delay(3);
-
+	
+  if (MPU6050_Init(&hi2c1) != HAL_OK) {
+       lcd_print(0, 0, "SENSOR ERROR");
+       while(1);
     }
 
-    gyro_cal[0]/=2000;
-    gyro_cal[1]/=2000;
-    gyro_cal[2]/=2000;
+  MPU6050_CalibrateGyro(&hi2c1, &mpu);
+  char buf[16];
 
   /* USER CODE END 2 */
 
@@ -156,75 +111,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  prevtime1=time1;
-	  	time1=HAL_GetTick();
-	  	elapsedtime1=(time1-prevtime1)*1000;
+	  
+        MPU6050_ReadAccel(&hi2c1, &mpu);
+        MPU6050_ReadGyro(&hi2c1, &mpu);
+        MPU6050_ReadTemp(&hi2c1, &mpu);
+        MPU6050_ComputeAngles(&mpu);
 
-	  	tuffer[0]=0x3B;
-	  	HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, tuffer, 1, HAL_MAX_DELAY);
-	  	HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, tuffer, 6, HAL_MAX_DELAY);
+        sprintf(buf, "Ax:%d", mpu.acc_raw[0]); // Prints x-axis acceleration to LCD screen
+        lcd_print(0, 0, buf);
 
-	  	acc_raw[0] = (tuffer[0]<<8|tuffer[1]);
-	  	acc_raw[1] = (tuffer[2]<<8|tuffer[3]);
-	  	acc_raw[2] = (tuffer[4]<<8|tuffer[5]);
-
-	  	buffer[0]=0x41;
-	  	HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, buffer, 1, HAL_MAX_DELAY);
-	  	HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, buffer, 6, HAL_MAX_DELAY);
-
-	  	raw_temp=(buffer[0]<<8|buffer[1]);
-	  	temp=(raw_temp/340.0)+36.53;
-
-	  	cuffer[0]=0x43;
-	  	HAL_I2C_Master_Transmit(&hi2c1, MPU6050_ADDR, cuffer, 1, HAL_MAX_DELAY);
-	  	HAL_I2C_Master_Receive(&hi2c1, MPU6050_ADDR, cuffer, 6, HAL_MAX_DELAY);
-
-	  	gyro_raw[0]= (cuffer[0]<<8|cuffer[1]);
-	  	gyro_raw[1]= (cuffer[2]<<8|cuffer[3]);
-	  	gyro_raw[2]= (cuffer[4]<<8|cuffer[5]);
-
-	  	gyro_raw[0] -= gyro_cal[0];
-	  	gyro_raw[1] -= gyro_cal[1];
-	  	gyro_raw[1] -= gyro_cal[2];
-
-	  	angle_pitch_gyro += gyro_raw[0]* 0.0000611;
-	  	angle_roll_gyro += gyro_raw[1] * 0.0000611;
-
-	  	angle_pitch_gyro += angle_roll_gyro * sin(gyro_raw[2]*0.000001066);
-	  	angle_roll_gyro -= angle_pitch_gyro * sin(gyro_raw[2]*0.000001066);
-
-	  	acc_total_vector= sqrt((acc_raw[0]*acc_raw[0])+(acc_raw[1]*acc_raw[1])+(acc_raw[2]*acc_raw[2]));
-
-	  	angle_pitch_acc = asin((float)acc_raw[1]/acc_total_vector)*57.296;
-	  	angle_roll_acc = asin((float)acc_raw[0]/acc_total_vector)* -57.296;
-
-	  	angle_pitch_acc -= 0.05; //0.05
-	  	angle_roll_acc -= -1.32; //-1.32
-
-	  	if(set_gyro){
-	  		angle_pitch=angle_pitch_gyro*0.9996+angle_pitch_acc*0.0004;
-	  		angle_roll=angle_roll_gyro*0.9996+angle_roll_acc*0.0004;
-
-	  	}
-	  	else{
-	  		angle_pitch=angle_pitch_acc;
-	  		set_gyro=true;
-	  	}
-	  	sprintf(ax, "%d", acc_raw[0]);
-	  	sprintf(ay, "%d", acc_raw[1]);
-	  	sprintf(az, "%d", acc_raw[2]);
-
-	  	lcd_print(0, 0, "x:");
-	  	lcd_print(0, 2, ax);
-	  /*	lcd_print(0, 6, "y:");
-	  	lcd_print(0, 8, ay);
-	  	lcd_print(0, 12, "z");
-	  	lcd_print(0, 13, az);*/
-	  	HAL_Delay(300);
-	  	lcd_clear();
-
-	  	while((HAL_GetTick()-prevtime)*1000<5000);
-	  	prevtime=HAL_GetTick();
+        HAL_Delay(500);
+        lcd_clear();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -373,3 +270,4 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
+
