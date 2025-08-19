@@ -38,7 +38,7 @@ mpu6050.c -> MPU6050 driver implementation
 ## 🛠️ How to Use
 1. Clone the repository:
    ```bash
-   git clone https://github.com/<umutzaif>/<MPU6050-IMU-Library-for-STM32>.git
+   git clone https://github.com/umutzaif/MPU6050-IMU-Library-for-STM32.git
 2. Open the project in STM32CubeIDE.
 
 3. Make sure MX_I2C1_Init() is configured for the correct pins.
