@@ -11,12 +11,14 @@ The main goal is to create a **reusable MPU6050 library** and demonstrate its us
 - Example of displaying sensor data on a 16x2 LCD
 
 ## 📂 Project Structure
+```
 /Core/Inc/
 main.h
 mpu6050.h -> MPU6050 function prototypes
 /Core/Src/
 main.c -> Example usage
 mpu6050.c -> MPU6050 driver implementation
+```
 
 
 ## 🔧 Hardware Requirements
